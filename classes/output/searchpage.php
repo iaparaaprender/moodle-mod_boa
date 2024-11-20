@@ -22,7 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 namespace mod_boa\output;
-defined('MOODLE_INTERNAL') || die();
 
 use renderable;
 use renderer_base;
@@ -68,7 +67,7 @@ class searchpage implements renderable, templatable {
         $defaultvariables = [
             'loadingimg' => $OUTPUT->pix_icon('i/loading', get_string('loadinghelp')),
             'blockid' => $id,
-            'socialnetworks' => $socialnetworks
+            'socialnetworks' => $socialnetworks,
         ];
 
         $config = get_config('mod_boa');

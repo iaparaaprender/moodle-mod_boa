@@ -60,6 +60,7 @@ if ($PAGE->user_is_editing()) {
 
     echo $renderer->render($renderable);
 } else {
+    echo "Acá iría el contenido real de la actividad";
 }
 
 echo $OUTPUT->footer();

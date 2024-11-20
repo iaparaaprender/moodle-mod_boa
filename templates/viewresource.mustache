@@ -17,10 +17,31 @@
 {{!
     @template mod_boa/viewresource
 
-    TODO describe template viewresource
+    Templete to show a resource in the search page.
 
     Example context (json):
     {
+        "metadata": {
+            "general": {
+                "title": {
+                    "none": "Title"
+                },
+                "description": {
+                    "none": "Description"
+                },
+                "keywords": {
+                    "none": "Keywords"
+                }
+            }
+        },
+        "custom": {
+            "preview": "Preview",
+            "type": "text/html",
+            "score": "4.5"
+        },
+        "social": {
+            "views": "123"
+        }
     }
 }}
 <div class="one-item">

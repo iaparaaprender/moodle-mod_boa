@@ -70,21 +70,21 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
         $boasearch.attr('autocomplete', 'off');
 
         var ferror = function(txt, level) {
-            switch(level) {
+            switch (level) {
                 case 'dev':
                     if ($boasearch.conf.debug) {
-                        console.log('BoASearch - ' + txt);
+                        Log.debug('BoASearch - ' + txt);
                     }
                 break;
                 default:
-                    console.log('BoASearch - ' + txt);
+                    Log.debug('BoASearch - ' + txt);
             }
         };
 
-        // Store a reference to the BoASearch object
+        // Store a reference to the BoASearch object.
         $.data(el, "boasearch", $boasearch);
 
-        // Private methods
+        // Private methods.
         var methods = {
             init: function() {
                 if (!$boasearch.conf.apiuri) {
@@ -94,7 +94,7 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
 
                 $boasearch.on('keypress', function(event) {
                     if (event.keyCode) {
-                        switch(event.keyCode) {
+                        switch (event.keyCode) {
                             case 13: // Enter
                                 event.preventDefault();
                                 $boasearchSuggestions.customReset();
@@ -127,12 +127,10 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
                     if (event.keyCode && specialKeys.indexOf(event.keyCode) == -1) {
                         if (val.length >= $boasearch.conf.options.minLetters) {
                             $boasearch.printSuggestions(val);
-                        }
-                        else {
+                        } else {
                             $boasearchSuggestions.customReset();
                         }
-                    }
-                    else if (event.keyCode === 13) {
+                    } else if (event.keyCode === 13) {
                         $boasearch.search();
                     }
                 });
@@ -145,17 +143,17 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
             },
 
             /**
-            * Build a suggestion item
-            *
-            * @param {object} item the current item data to render
-            * @param {string} query the last query submited to the server.
-            * */
+             * Build a suggestion item
+             *
+             * @param {object} item the current item data to render
+             * @param {string} query the last query submited to the server.
+             */
             getItemMarkup: function(item, query) {
                 var text = item.query != '' ? methods.highlightString(item.query, query) : '';
 
                 var $item = $('<li>' + text + '</li>');
 
-                $item.on('click', function(){
+                $item.on('click', function() {
                     var $this = $(this);
                     $boasearchSuggestions.customReset();
                     $boasearch.val($this.text());
@@ -168,8 +166,8 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
                 var n = str.toLowerCase().indexOf(query.toLowerCase());
                 if (n >= 0) {
                     var before = str.substr(0, n);
-                    var word   = str.substr(n, query.length);
-                    var after  = str.substr(n + query.length);
+                    var word = str.substr(n, query.length);
+                    var after = str.substr(n + query.length);
 
                     str = before + '<em>' + word + '</em>' + after;
                 }
@@ -182,8 +180,7 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
 
                 if ($current.length < 1) {
                     oldposition = -1;
-                }
-                else {
+                } else {
                     oldposition = $current.index();
                 }
 
@@ -206,8 +203,7 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
 
                 if ($current.length < 1) {
                     oldposition = -1;
-                }
-                else {
+                } else {
                     oldposition = $current.index();
                 }
 
@@ -227,7 +223,7 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
             printItemsMarkup: function(title, data, query) {
 
                 if (data.length > 0) {
-                    $.each(data, function(k, item){
+                    $.each(data, function(k, item) {
                         var $item = methods.getItemMarkup(item, query, k);
                         $boasearchSuggestions.append($item);
                     });
@@ -238,10 +234,9 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
             },
 
             initSearch: function() {
-                if (typeof($boasearch.conf.events.onstart) == 'function') {
+                if (typeof $boasearch.conf.events.onstart == 'function') {
                     $boasearch.conf.events.onstart(startRecord > 0);
-                }
-                else {
+                } else {
                     if ($boasearch.conf.results.target) {
                         $($boasearch.conf.results.target).addClass('loading');
                         if (startRecord === 0) {
@@ -253,10 +248,9 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
 
             printResultSearch: function(data) {
 
-                if (typeof($boasearch.conf.events.onfound) == 'function') {
+                if (typeof $boasearch.conf.events.onfound == 'function') {
                     $boasearch.conf.events.onfound(data, startRecord);
-                }
-                else {
+                } else {
                     if ($boasearch.conf.results.target) {
                         var $target = $($boasearch.conf.results.target);
                         $target.removeClass('loading');
@@ -330,7 +324,7 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
             requestObjects[requestObjects.length] = $.get(uri, params, function(data) {
 
                 if (data.length > 0) {
-                    data.sort(function(a, b){
+                    data.sort(function(a, b) {
                         return b.size - a.size;
                     });
 
@@ -345,7 +339,7 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
 
             var query = $boasearch.val();
 
-            if(query.length < $boasearch.conf.options.minLetters) {
+            if (query.length < $boasearch.conf.options.minLetters) {
                 return false;
             }
 
@@ -369,18 +363,17 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
 
             if ($boasearch.conf.filters.length > 0) {
                 $.each($boasearch.conf.filters, function(k, filter) {
-                    if (typeof(filter.value) == 'object') {
+                    if (typeof filter.value == 'object') {
                         $.each(filter.value, function(m, val) {
                             params['(meta)[' + filter.meta + '][' + m + ']'] = val;
                         });
-                    }
-                    else {
+                    } else {
                         params['(meta)[' + filter.meta + ']'] = filter.value;
                     }
                 });
             }
 
-            $.ajax( {
+            $.ajax({
                 url: $boasearch.conf.apiuri,
                 data: params,
                 dataType: 'json',
@@ -413,6 +406,8 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
                 }
             });
 
+            return true;
+
         };
 
         $boasearch.searchMore = function() {
@@ -426,11 +421,11 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
 
         $boasearch.choosePreview = methods.choosePreview;
 
-        //BoA: Initialize
+        // BoA: Initialize.
         methods.init();
     };
 
-    //BoA: Default Settings
+    // BoA: Default Settings.
     $.boasearch.defaults = {
         apiuri: null,
         catalogues: [],
@@ -450,24 +445,26 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
             onstart: null,
             onfound: null,
             onerror: function(error) {
-                console.log('BoASearch - search error');
-                console.log(error);
+                Log.debug('BoASearch - search error');
+                Log.debug(error);
                 return true;
             }
         }
     };
 
-    //BoA: Plugin Function.
+    // BoA: Plugin Function.
     $.fn.boasearch = function(params, paramval) {
-        if (params === undefined) { params = {}; }
+        if (params === undefined) {
+            params = {};
+        }
+
         if (typeof params === "object") {
             return this.each(function() {
                 new $.boasearch(this, params);
             });
-        }
-        else {
+        } else {
 
-            var $boasearch;
+            var $boasearch = null;
 
             if ('data' in this) {
                 $boasearch = this.data('boasearch');
@@ -483,14 +480,16 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
                 switch (params) {
                     case "search": $boasearch.search(); break;
                     case "nextsearch": $boasearch.searchMore(); break;
-                    case "option": return $boasearch.conf.options[paramval]; break;
+                    case "option": return $boasearch.conf.options[paramval];
                     case "restart": $boasearch.restart(); break;
-                    case "choosePreview": return $boasearch.choosePreview(paramval); break;
+                    case "choosePreview": return $boasearch.choosePreview(paramval);
                 }
             } else {
-                console.log('Error in boasearch object');
+                Log.debug('Error in boasearch object');
             }
         }
+
+        return true;
     };
 
     var chooseview = function(data) {
@@ -534,32 +533,23 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
                             data.metadata.technical.format.match(/audio/gi) ||
                             data.metadata.technical.format.match(/image/gi)) {
 
-                        if (typeof(data.manifest.alternate) == 'object') {
+                        if (typeof data.manifest.alternate == 'object') {
                             name = data.manifest.alternate.find(e => /small/g.test(e));
 
                             if (name) {
                                 src = alterpath + name;
                             } else {
                                 name = data.manifest.alternate.find(e => /medium/g.test(e));
-                                if (name) {
-                                    src = alterpath + name;
-                                } else {
-                                    src = data.about + '/!/' + data.manifest.entrypoint;
-                                }
+                                src = name ? alterpath + name : data.about + '/!/' + data.manifest.entrypoint;
                             }
                         } else {
                             src = data.about + '/!/' + data.manifest.entrypoint;
                         }
                     } else {
-                        name = typeof(data.manifest.alternate) == 'object' ?
+                        name = typeof data.manifest.alternate == 'object' ?
                                         data.manifest.alternate.find(e => /thumb/g.test(e)) : '';
-                        if (name) {
-                            src = alterpath + name;
-                        } else {
-                            src = data.manifest.customicon;
-                        }
+                        src = name ? alterpath + name : data.manifest.customicon;
                     }
-
 
                 } else {
                     if ('technical' in data.metadata && 'format' in data.metadata.technical &&
@@ -594,7 +584,7 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
     };
 
     var isdownloadable = function(data) {
-        //ToDo: validate by content type.
+        // ToDo: validate by content type.
         return !data.manifest.conexion_type || data.manifest.conexion_type != 'external';
     };
 
@@ -614,9 +604,11 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
             if ($errorBox) {
                 $errorBox.html(content);
             } else {
-                console.log(content);
+                Log.debug(content);
             }
         }
+
+        return true;
     };
 
     var itemcontent = function(item) {
@@ -674,14 +666,14 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
         loadStrings();
 
         $('#' + blockid).each(function() {
-            var $_this = $(this);
-            var $searchResult = $_this.find('[data-control="search-result"]');
-            var $boaSearch = $_this.find('[data-control="search-text"]');
+            var $thisblock = $(this);
+            var $searchResult = $thisblock.find('[data-control="search-result"]');
+            var $boaSearch = $thisblock.find('[data-control="search-text"]');
 
-            $errorBox = $_this.find('[data-control="errors-box"]');
+            $errorBox = $thisblock.find('[data-control="errors-box"]');
 
-            $_this.find('[data-control="search-button"]').on('click', function(){
-                $_this.find('> .search-result').empty();
+            $thisblock.find('[data-control="search-button"]').on('click', function() {
+                $thisblock.find('> .search-result').empty();
                 $boaSearch.boasearch('restart');
                 $boaSearch.boasearch('search');
             });
@@ -712,13 +704,12 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
 
                         if (data.length === 0 || data.length < resultsSize) {
                             $searchResult.find('> button').hide();
-                        }
-                        else {
+                        } else {
                             $searchResult.find('> button').show();
                         }
 
                         if (start == 0) {
-                            $_this.find('[data-control="show-one"]').empty();
+                            $thisblock.find('[data-control="show-one"]').empty();
                         }
 
                         if ((!data || data.length === 0) && start == 0) {
@@ -733,8 +724,7 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
                         $.each(data, function(k, item) {
                             if (item.manifest.conexion_type == 'external') {
                                 item.finaluri = item.manifest.url;
-                            }
-                            else {
+                            } else {
                                 item.finaluri = item.about + '/!/';
 
                                 if (item.manifest.entrypoint) {
@@ -758,7 +748,7 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
                                 }
 
                                 var request = $.get($this.attr('boa-href'))
-                                    .then(function( data ) {
+                                    .then(function(data) {
 
                                         data.custom = {};
                                         data.custom.preview = chooseview(data);
@@ -781,7 +771,7 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
 
                                         data.custom.socialnetworks = socialnetworksitems;
 
-                                        if (typeof(data.metadata.general.keywords.none) == 'object') {
+                                        if (typeof data.metadata.general.keywords.none == 'object') {
                                             data.metadata.general.keywords.none = data.metadata.general.keywords.none.join(', ');
                                         }
 
@@ -792,6 +782,9 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
                                                 var $html = $(html);
 
                                                 return $html;
+                                            })
+                                            .reject(function(error) {
+                                                Log.debug(error);
                                             });
 
                                         return template.promise();
@@ -826,6 +819,8 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
                                     });
 
                                     $this.data('modal', modalresource);
+
+                                    return true;
                                 });
 
                             });
@@ -842,14 +837,14 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
                             $node.remove();
                         });
 
-                        console.log(error);
+                        Log.debug(error);
 
                         $target.removeClass('loading');
                     }
                 }
             });
 
-            $searchResult.find('> button').on('click', function(){
+            $searchResult.find('> button').on('click', function() {
                 $boaSearch.boasearch('nextsearch');
             });
 
