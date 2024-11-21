@@ -21,14 +21,33 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', 'core/str', 'core/log'],
-    function($, ModalFactory, ModalEvents, Templates, Str, Log) {
+define(['jquery',
+        'core/modal_factory',
+        'core/modal_events',
+        'core/templates',
+        'core/str',
+        'core/log',
+        'core/ajax'],
+    function($,
+            ModalFactory,
+            ModalEvents,
+            Templates,
+            Str,
+            Log,
+            Ajax) {
 
     var $errorBox = null;
+
+    var global = {
+        selected: []
+    };
 
     // Load strings.
     var strings = [
         {key: 'noresultsfound', component: 'mod_boa'},
+        {key: 'removeselected', component: 'mod_boa'},
+        {key: 'saved', component: 'mod_boa'},
+        {key: 'notsaved', component: 'mod_boa'}
     ];
     var s = [];
 
@@ -494,7 +513,7 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
 
     var chooseview = function(data) {
 
-        var $res;
+        var $res = null;
 
         // If it is a external resource.
         if (data.manifest.conexion_type && data.manifest.conexion_type == 'external') {
@@ -507,80 +526,78 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
             return $res.get(0).outerHTML + $reslink.get(0).outerHTML;
         }
 
-        if (data.metadata.technical && data.metadata.technical.format) {
+        if (!data.metadata.technical || !data.metadata.technical.format) {
+            return $res;
+        }
 
-            if (data.metadata.technical.format.match(/pdf/gi) ||
-                    data.metadata.technical.format.match(/html/gi) ||
-                    data.metadata.technical.format.match(/tepuy/gi)) {
-                $res = $('<iframe></iframe>');
-                $res.attr('src', data.about + '/!/').attr('type', data.metadata.technical.format);
-
-            } else {
-
-                var src = '';
-                var alternatebase;
-                if (data.id.indexOf('/content/') >= 0) {
-                    alternatebase = data.id.substr(data.id.indexOf('/content/') + 9);
-                } else {
-                    alternatebase = data.manifest.entrypoint;
-                }
-
-                if (data.manifest.alternate && data.manifest.entrypoint) {
-                    var alterpath = data.about + '/!/.alternate/' + alternatebase + '/';
-                    var name = '';
-
-                    if (data.metadata.technical.format.match(/video/gi) ||
-                            data.metadata.technical.format.match(/audio/gi) ||
-                            data.metadata.technical.format.match(/image/gi)) {
-
-                        if (typeof data.manifest.alternate == 'object') {
-                            name = data.manifest.alternate.find(e => /small/g.test(e));
-
-                            if (name) {
-                                src = alterpath + name;
-                            } else {
-                                name = data.manifest.alternate.find(e => /medium/g.test(e));
-                                src = name ? alterpath + name : data.about + '/!/' + data.manifest.entrypoint;
-                            }
-                        } else {
-                            src = data.about + '/!/' + data.manifest.entrypoint;
-                        }
-                    } else {
-                        name = typeof data.manifest.alternate == 'object' ?
-                                        data.manifest.alternate.find(e => /thumb/g.test(e)) : '';
-                        src = name ? alterpath + name : data.manifest.customicon;
-                    }
-
-                } else {
-                    if ('technical' in data.metadata && 'format' in data.metadata.technical &&
-                            (data.metadata.technical.format.match(/video/gi) ||
-                            data.metadata.technical.format.match(/audio/gi) ||
-                            data.metadata.technical.format.match(/image/gi))) {
-                        src = data.about + '/!/';
-                    } else {
-                        src = data.manifest.customicon;
-                    }
-                }
-
-                if (data.metadata.technical.format.match(/video/gi)) {
-                    $res = $('<video controls><source></source></video>');
-                    $res.find('source').attr('src', src).attr('type', data.metadata.technical.format);
-
-                } else if (data.metadata.technical.format.match(/audio/gi)) {
-                    $res = $('<audio controls><source></source></audio>');
-                    $res.find('source').attr('src', src).attr('type', data.metadata.technical.format);
-
-                } else {
-                    $res = $('<img />');
-                    $res.attr('src', src).attr('alt', data.metadata.general.title.none);
-                }
-
-            }
+        if (data.metadata.technical.format.match(/pdf/gi) ||
+                data.metadata.technical.format.match(/html/gi) ||
+                data.metadata.technical.format.match(/tepuy/gi)) {
+            $res = $('<iframe></iframe>');
+            $res.attr('src', data.about + '/!/').attr('type', data.metadata.technical.format);
 
             return $res.get(0).outerHTML;
         }
 
-        return $res;
+        var src = '';
+        var alternatebase;
+        if (data.id.indexOf('/content/') >= 0) {
+            alternatebase = data.id.substr(data.id.indexOf('/content/') + 9);
+        } else {
+            alternatebase = data.manifest.entrypoint;
+        }
+
+        if (data.manifest.alternate && data.manifest.entrypoint) {
+            var alterpath = data.about + '/!/.alternate/' + alternatebase + '/';
+            var name = '';
+
+            if (data.metadata.technical.format.match(/video/gi) ||
+                    data.metadata.technical.format.match(/audio/gi) ||
+                    data.metadata.technical.format.match(/image/gi)) {
+
+                if (typeof data.manifest.alternate == 'object') {
+                    name = data.manifest.alternate.find(e => /small/g.test(e));
+
+                    if (name) {
+                        src = alterpath + name;
+                    } else {
+                        name = data.manifest.alternate.find(e => /medium/g.test(e));
+                        src = name ? alterpath + name : data.about + '/!/' + data.manifest.entrypoint;
+                    }
+                } else {
+                    src = data.about + '/!/' + data.manifest.entrypoint;
+                }
+            } else {
+                name = typeof data.manifest.alternate == 'object' ?
+                                data.manifest.alternate.find(e => /thumb/g.test(e)) : '';
+                src = name ? alterpath + name : data.manifest.customicon;
+            }
+
+        } else {
+            if ('technical' in data.metadata && 'format' in data.metadata.technical &&
+                    (data.metadata.technical.format.match(/video/gi) ||
+                    data.metadata.technical.format.match(/audio/gi) ||
+                    data.metadata.technical.format.match(/image/gi))) {
+                src = data.about + '/!/';
+            } else {
+                src = data.manifest.customicon;
+            }
+        }
+
+        if (data.metadata.technical.format.match(/video/gi)) {
+            $res = $('<video controls><source></source></video>');
+            $res.find('source').attr('src', src).attr('type', data.metadata.technical.format);
+
+        } else if (data.metadata.technical.format.match(/audio/gi)) {
+            $res = $('<audio controls><source></source></audio>');
+            $res.find('source').attr('src', src).attr('type', data.metadata.technical.format);
+
+        } else {
+            $res = $('<img />');
+            $res.attr('src', src).attr('alt', data.metadata.general.title.none);
+        }
+
+        return $res.get(0).outerHTML;
     };
 
     var isdownloadable = function(data) {
@@ -591,6 +608,10 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
     var showmessage = function(text, type, info, asreturn) {
         type = type ? type : 'error';
         info = info ? info : '';
+
+        if (type == 'error') {
+            type = 'danger';
+        }
 
         var content = $('#boa-tpl-error-item')[0].innerHTML;
 
@@ -628,6 +649,145 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
         return content;
     };
 
+    var binditem = function($item) {
+
+        $item.find('[boa-href]').on('click', function() {
+            var $this = $(this);
+
+            var modalresource = $this.data('modal');
+
+            if (modalresource) {
+                modalresource.show();
+                return;
+            }
+
+            var request = $.get($this.attr('boa-href'))
+                .then(function(data) {
+
+                    data.custom = {};
+                    data.custom.preview = chooseview(data);
+                    data.custom.type = (data.metadata.technical && data.metadata.technical.format) ?
+                                            data.metadata.technical.format : '';
+                    data.custom.score = 'avg' in data.social.score ?
+                                            data.social.score.avg + ' / ' + data.social.score.count : 0;
+                    data.custom.downloadable = isdownloadable(data);
+                    data.about = encodeURI(data.about);
+
+                    var socialnetworksitems = [];
+                    $.each(global.socialnetworks, function(i, v) {
+                        var url = v.url.replace('{url}', encodeURI(data.about + '/!/'));
+                        url = url.replace('{name}', data.metadata.general.title.none);
+
+                        var item = {};
+                        item.url = url;
+                        item.icon = v.icon;
+                        socialnetworksitems.push(item);
+                    });
+
+                    data.custom.socialnetworks = socialnetworksitems;
+
+                    if (typeof data.metadata.general.keywords.none == 'object') {
+                        data.metadata.general.keywords.none = data.metadata.general.keywords.none.join(', ');
+                    }
+
+                    return Templates.render('mod_boa/viewresource', data);
+                })
+                .then(function(html) {
+
+                    var $html = $(html);
+                    $html.find('[data-addtoselection]').on('click', function() {
+                        var $thisobject = $(this);
+
+                        if (global.selected[$thisobject.data('addtoselection')]) {
+                            global.selected[$thisobject.data('addtoselection')].detach();
+                            delete global.selected[$thisobject.data('addtoselection')];
+                        } else {
+                            global.selected[$thisobject.data('addtoselection')] = $item;
+                            $thisobject.removeClass('btn-primary').addClass('btn-danger');
+                            $thisobject.find('span').html(s.removeselected);
+                            refreshadded();
+                        }
+                        $this.data('modal').hide();
+                    });
+
+                    return $html;
+                })
+                .catch(function(error) {
+                    Log.debug(error);
+                });
+
+            ModalFactory.create({
+                body: request.promise()
+            })
+            .then(function(modal) {
+                modalresource = modal;
+
+                if ($item.data('metadata')) {
+                    let itemdata = $item.data('metadata');
+                    modalresource.setTitle(itemdata.metadata.general.title.none);
+                }
+                modal.getModal().addClass('block_boasearch-modal');
+                modal.show();
+
+                var root = modal.getRoot();
+                root.on(ModalEvents.hidden, function() {
+
+                    // Stop audio and video when close the window.
+                    $(modal.getBody()).find('video').each(function() {
+                        this.pause();
+                    });
+
+                    $(modal.getBody()).find('audio').each(function() {
+                        this.pause();
+                    });
+
+                    $(modal.getBody()).find('iframe').each(function() {
+                        let $iframe = $(this);
+                        $iframe.attr('src', 'about:blank');
+                        $this.data('modal', null);
+                    });
+                });
+
+                $this.data('modal', modalresource);
+
+                return true;
+            });
+
+        });
+
+    };
+
+    var refreshadded = function() {
+        var $container = $('#boa-currentselection > div.boa-items');
+        $container.children().detach();
+        $('#boa-currentselection > .alert').detach();
+
+        $('#boa-currentselection .boa-saveselection').show();
+
+        for (var about in global.selected) {
+            let $item = global.selected[about];
+
+            if ($item) {
+                $container.append($item);
+                continue;
+            }
+
+            $.get(about)
+                .then(function(data) {
+                    var $item = $(itemcontent(data));
+                    binditem($item);
+                    $item.data('metadata', data);
+                    global.selected[data.about] = $item;
+                    $container.append($item);
+                })
+                .fail(function(e) {
+                    Log.debug('Error loading resource');
+                    Log.debug(e);
+                });
+
+        }
+    };
+
     /**
      * Load strings from server.
      */
@@ -655,13 +815,15 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
      * Initialise all for the block.
      *
      * @param {string} blockid The block id.
+     * @param {int} cmid The course module id.
      * @param {array} boauri The BoA API URI.
      * @param {int} pagesize The number of items to show.
      * @param {array} socialnetworks The social networks to share.
      */
-    var init = function(blockid, boauri, pagesize, socialnetworks) {
+    var init = function(blockid, cmid, boauri, pagesize, socialnetworks) {
 
         pagesize = pagesize ? pagesize : 10;
+        global.socialnetworks = socialnetworks;
 
         loadStrings();
 
@@ -722,6 +884,12 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
                         }
 
                         $.each(data, function(k, item) {
+
+                            // Check if the item is already selected.
+                            if (global.selected[item.about]) {
+                                return;
+                            }
+
                             if (item.manifest.conexion_type == 'external') {
                                 item.finaluri = item.manifest.url;
                             } else {
@@ -735,95 +903,10 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
                             item.thumb = $boaSearch.boasearch('choosePreview', item);
 
                             var $item = $(itemcontent(item));
+                            $item.data('metadata', item);
                             $item.appendTo($target);
 
-                            $item.find('[boa-href]').on('click', function() {
-                                var $this = $(this);
-
-                                var modalresource = $this.data('modal');
-
-                                if (modalresource) {
-                                    modalresource.show();
-                                    return;
-                                }
-
-                                var request = $.get($this.attr('boa-href'))
-                                    .then(function(data) {
-
-                                        data.custom = {};
-                                        data.custom.preview = chooseview(data);
-                                        data.custom.type = (data.metadata.technical && data.metadata.technical.format) ?
-                                                                data.metadata.technical.format : '';
-                                        data.custom.score = 'avg' in data.social.score ?
-                                                                data.social.score.avg + ' / ' + data.social.score.count : 0;
-                                        data.custom.downloadable = isdownloadable(data);
-
-                                        var socialnetworksitems = [];
-                                        $.each(socialnetworks, function(i, v) {
-                                            var url = v.url.replace('{url}', encodeURI(data.about + '/!/'));
-                                            url = url.replace('{name}', data.metadata.general.title.none);
-
-                                            var item = {};
-                                            item.url = url;
-                                            item.icon = v.icon;
-                                            socialnetworksitems.push(item);
-                                        });
-
-                                        data.custom.socialnetworks = socialnetworksitems;
-
-                                        if (typeof data.metadata.general.keywords.none == 'object') {
-                                            data.metadata.general.keywords.none = data.metadata.general.keywords.none.join(', ');
-                                        }
-
-                                        var template = Templates.render('mod_boa/viewresource', data)
-                                            .then(function(html) {
-                                                modalresource.setTitle(data.metadata.general.title.none);
-
-                                                var $html = $(html);
-
-                                                return $html;
-                                            })
-                                            .reject(function(error) {
-                                                Log.debug(error);
-                                            });
-
-                                        return template.promise();
-                                    }
-                                );
-
-                                ModalFactory.create({
-                                    body: request.promise()
-                                })
-                                .then(function(modal) {
-                                    modalresource = modal;
-                                    modal.getModal().addClass('block_boasearch-modal');
-                                    modal.show();
-
-                                    var root = modal.getRoot();
-                                    root.on(ModalEvents.hidden, function() {
-
-                                        // Stop audio and video when close the window.
-                                        $(modal.getBody()).find('video').each(function() {
-                                            this.pause();
-                                        });
-
-                                        $(modal.getBody()).find('audio').each(function() {
-                                            this.pause();
-                                        });
-
-                                        $(modal.getBody()).find('iframe').each(function() {
-                                            let $iframe = $(this);
-                                            $iframe.attr('src', 'about:blank');
-                                            $this.data('modal', null);
-                                        });
-                                    });
-
-                                    $this.data('modal', modalresource);
-
-                                    return true;
-                                });
-
-                            });
+                            binditem($item);
                         });
                     },
                     onerror: function(error) {
@@ -848,6 +931,39 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', '
                 $boaSearch.boasearch('nextsearch');
             });
 
+        });
+
+        var $saveselection = $('#boa-currentselection .boa-saveselection');
+        $saveselection.hide();
+        $saveselection.on('click', function() {
+            var $thisbutton = $(this);
+
+            var data = [];
+            for (var about in global.selected) {
+                data.push(about);
+            }
+
+            Ajax.call([{
+                methodname: 'mod_boa_select_resources',
+                args: {
+                    cmid: cmid,
+                    list: data
+                }
+            }])[0].then(function(data) {
+
+                if (data) {
+                    let $msg = showmessage(s.saved, 'success', '', true);
+                    $saveselection.after($msg);
+                } else {
+                    let $msg = showmessage(s.notsaved, 'error', '', true);
+                    $saveselection.after($msg);
+                }
+
+                $thisbutton.hide();
+            }).fail(function(e) {
+                Log.debug('Error saving resources selected');
+                Log.debug(e);
+            });
         });
 
     };

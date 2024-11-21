@@ -15,18 +15,28 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information for Resource from object bank
+ * External functions and service declaration for Resource from object bank
+ *
+ * Documentation: {@link https://moodledev.io/docs/apis/subsystems/external/description}
  *
  * @package    mod_boa
+ * @category   webservice
  * @copyright  2024 David Herney @ BambuCo
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component    = 'mod_boa';
-$plugin->release      = '1.0';
-$plugin->version      = 2024111900.01;
-$plugin->requires     = 2022112800;
-$plugin->supported    = [401, 405];
-$plugin->maturity     = MATURITY_BETA;
+$functions = [
+    'mod_boa_select_resources' => [
+        'classname'   => 'mod_boa\external\select_resources',
+        'methodname'  => 'execute',
+        'classpath'   => 'mod/boa/classes/external/select_resources.php',
+        'description' => 'Returns a list of resources',
+        'type'        => 'write',
+        'ajax'        => true,
+        'services' => [
+            MOODLE_OFFICIAL_MOBILE_SERVICE,
+        ],
+    ],
+];

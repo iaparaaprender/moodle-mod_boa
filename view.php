@@ -52,10 +52,9 @@ $PAGE->set_heading(format_string($course->fullname));
 echo $OUTPUT->header();
 
 if ($PAGE->user_is_editing()) {
-    echo $OUTPUT->heading(get_string('searchobjects', 'mod_boa'));
 
     // Load templates and other general information.
-    $renderable = new \mod_boa\output\searchpage();
+    $renderable = new \mod_boa\output\searchpage($cm->id);
     $renderer = $PAGE->get_renderer('block_boasearch');
 
     echo $renderer->render($renderable);

@@ -24,47 +24,56 @@
 
 }}
 <div class="container-fluid">
-    <div id="{{blockid}}" class="boa-box">
-        <div data-control="errors-box" style="text-align: center;"></div>
-        <div class="input-group">
-            <input data-control="search-text" class="mr-sm-12 form-control" placeholder="{{#str}}search, mod_boa{{/str}}" type="text">
-            <button data-control="search-button" class="btn btn-primary my-12 my-sm-0" type="button">
-                {{#str}}search, mod_boa{{/str}}
-            </button>
-        </div>
-        <div data-control="show-one" style="text-align: center;"></div>
-        <div data-control="search-result" class="col-12" style="display: none;">
-            <div class="boa-content"></div>
-            <button type="button" class="btn btn-primary btn-lg btn-block">{{#str}}showmore, mod_boa{{/str}}</button>
-        </div>
-    </div>
-
-    <!-- Templates, required in the page -->
-    <template id="boa-tpl-item">
-        <div class="one-resource">
-            <span class="item-type badge bg-primary">{type}</span>
-            <span class="thumb-box" boa-href="{about}" title="{title}" style="background-image: url({thumb})"></span>
-            <div class="panel-body">
-                <label class="title" boa-href="{about}">{title}</label>
+    <div class="row">
+        <div class="col-9">
+            <h2>{{#str}}searchobjects, mod_boa{{/str}}</h2>
+            <div id="{{blockid}}" class="boa-box">
+                <div data-control="errors-box" style="text-align: center;"></div>
+                <div class="input-group">
+                    <input data-control="search-text" class="mr-sm-12 form-control" placeholder="{{#str}}search, mod_boa{{/str}}" type="text">
+                    <button data-control="search-button" class="btn btn-primary my-12 my-sm-0" type="button">
+                        {{#str}}search, mod_boa{{/str}}
+                    </button>
+                </div>
+                <div data-control="show-one" style="text-align: center;"></div>
+                <div data-control="search-result" class="col-12" style="display: none;">
+                    <div class="boa-content"></div>
+                    <button type="button" class="btn btn-primary btn-lg btn-block">{{#str}}showmore, mod_boa{{/str}}</button>
+                </div>
             </div>
-            <div class="panel-foot">
-                <span class="meta mcore-text">
-                    <span class="social badge score" title="{{#str}}likes, mod_boa{{/str}}">
-                        <i class="fa fa-star"></i> {score}
-                    </span>
-                    <span class="social badge views" title="{{#str}}views, mod_boa{{/str}}">
-                        <i class="fa fa-eye"></i> {views}
-                    </span>
-                </span>
-            </div>
-        </div>
-    </template>
 
-    <template id="boa-tpl-error-item">
-        <div class="alert alert-dismissible alert-danger">
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
-            <p>{message}</p>
-            <div>{info}</div>
+            <!-- Templates, required in the page -->
+            <template id="boa-tpl-item">
+                <div class="one-resource">
+                    <span class="item-type badge bg-primary">{type}</span>
+                    <span class="thumb-box" boa-href="{about}" title="{title}" style="background-image: url({thumb})"></span>
+                    <div class="panel-body">
+                        <label class="title" boa-href="{about}">{title}</label>
+                    </div>
+                    <div class="panel-foot">
+                        <span class="meta mcore-text">
+                            <span class="social badge score" title="{{#str}}likes, mod_boa{{/str}}">
+                                <i class="fa fa-star"></i> {score}
+                            </span>
+                            <span class="social badge views" title="{{#str}}views, mod_boa{{/str}}">
+                                <i class="fa fa-eye"></i> {views}
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </template>
+
+            <template id="boa-tpl-error-item">
+                <div class="alert alert-dismissible alert-{type}">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    <p>{message}</p>
+                    <div>{info}</div>
+                </div>
+            </template>
         </div>
-    </template>
+        <div id="boa-currentselection" class="col-3">
+            <h2>{{#str}}currentselection, mod_boa{{/str}}</h2>
+            <button type="button" class="btn btn-primary btn-lg btn-block boa-saveselection">{{#str}}saveselection, mod_boa{{/str}}</button>
+            <div class="boa-items"></div>
+        </div>
 </div>

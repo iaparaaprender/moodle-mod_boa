@@ -228,3 +228,14 @@
 .boasearch-suggestions > li > em {
     background-color: yellow;
 }
+
+#boa-currentselection {
+    background-color: #eee;
+    border-left: 2px solid #aaa;
+}
+
+#boa-currentselection > div.boa-items {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 10px 0;
+}

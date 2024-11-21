@@ -60,6 +60,7 @@ function boa_add_instance($moduleinstance, $form = null) {
 
     $moduleinstance->timecreated = time();
     $moduleinstance->timemodified = time();
+    $moduleinstance->resources = '';
 
     $id = $DB->insert_record('boa', $moduleinstance);
     $completiontimeexpected = !empty($moduleinstance->completionexpected) ? $moduleinstance->completionexpected : null;

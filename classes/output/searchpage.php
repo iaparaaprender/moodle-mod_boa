@@ -36,6 +36,20 @@ use templatable;
 class searchpage implements renderable, templatable {
 
     /**
+     * @var int $cmid Course module id
+     */
+    private $cmid;
+
+    /**
+     * Constructor.
+     *
+     * @param int $cmid Course module id
+     */
+    public function __construct(int $cmid) {
+        $this->cmid = $cmid;
+    }
+
+    /**
      * Export this data so it can be used as the context for a mustache template.
      *
      * @param \renderer_base $output
@@ -74,7 +88,7 @@ class searchpage implements renderable, templatable {
         $repositories = explode("\n", $config->repositories);
         $repositories = array_map('trim', $repositories);
         $repositories = array_filter($repositories);
-        $PAGE->requires->js_call_amd('mod_boa/main', 'init', [$id, $repositories, $config->pagesize, $socialnetworks]);
+        $PAGE->requires->js_call_amd('mod_boa/main', 'init', [$id, $this->cmid, $repositories, $config->pagesize, $socialnetworks]);
 
         return $defaultvariables;
     }
