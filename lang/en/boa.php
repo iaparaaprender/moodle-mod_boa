@@ -52,3 +52,5 @@ $string['saveselection'] = 'Save selection';
 $string['notsaved'] = 'The selection has not been saved, please try again';
 $string['saved'] = 'The current selection has been saved';
 $string['evantresources_updated'] = 'The resources list have been updated';
+$string['otherresources'] = 'Other resources';
+$string['nototherresources'] = 'There are no other resources';

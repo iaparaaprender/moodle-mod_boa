@@ -52,14 +52,12 @@ $PAGE->set_heading(format_string($course->fullname));
 echo $OUTPUT->header();
 
 if ($PAGE->user_is_editing()) {
-
-    // Load templates and other general information.
-    $renderable = new \mod_boa\output\searchpage($cm->id);
-    $renderer = $PAGE->get_renderer('block_boasearch');
-
-    echo $renderer->render($renderable);
+    $renderable = new \mod_boa\output\searchpage($cm->id, $moduleinstance);
 } else {
-    echo "Acá iría el contenido real de la actividad";
+    $renderable = new \mod_boa\output\content($moduleinstance);
 }
+
+$renderer = $PAGE->get_renderer('mod_boa');
+echo $renderer->render($renderable);
 
 echo $OUTPUT->footer();

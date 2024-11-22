@@ -42,4 +42,14 @@ class renderer extends plugin_renderer_base {
     public function render_searchpage(searchpage $searchpage) {
         return $this->render_from_template('mod_boa/searchpage', $searchpage->export_for_template($this));
     }
+
+    /**
+     * Return the template content for the content page.
+     *
+     * @param content $content The content renderable
+     * @return string HTML string
+     */
+    public function render_content(content $content) {
+        return $this->render_from_template('mod_boa/content', $content->export_for_template($this));
+    }
 }

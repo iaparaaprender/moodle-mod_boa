@@ -25,16 +25,16 @@ define(['jquery',
         'core/modal_factory',
         'core/modal_events',
         'core/templates',
-        'core/str',
         'core/log',
-        'core/ajax'],
+        'core/ajax',
+        'mod_boa/util'],
     function($,
             ModalFactory,
             ModalEvents,
             Templates,
-            Str,
             Log,
-            Ajax) {
+            Ajax,
+            BoAUtil) {
 
     var $errorBox = null;
 
@@ -276,7 +276,7 @@ define(['jquery',
 
                         $.each(data, function(k, item) {
                             var $html = $('<div class="boa-video"></div>');
-                            var preview = this.choosePreview(item);
+                            var preview = BoAUtil.choosePreview(item);
                             $html.append('<a href="' + item.about + '"><h5>' + item.metadata.general.title.none + '</h5></a>');
                             $html.append('<a href="' + item.about + '"><img src="' + preview + '.img" /></a>');
                             $html.append('<p>' + item.metadata.general.description.none + '</p>');
@@ -285,31 +285,8 @@ define(['jquery',
                         });
                     }
                 }
-            },
-
-            choosePreview: function(item) {
-
-                if ('alternate' in item.manifest && item.manifest.entrypoint) {
-
-                    var alternatebase;
-
-                    if (item.id.indexOf('/content/') >= 0) {
-                        alternatebase = item.id.substr(item.id.indexOf('/content/') + 9);
-                    } else {
-                        alternatebase = item.manifest.entrypoint;
-                    }
-
-                    var alterpath = item.about + '/!/.alternate/' + alternatebase;
-
-                    if (item.manifest.alternate.indexOf('preview.png') >= 0) {
-                        return alterpath + '/preview.png';
-                    } else if (item.manifest.alternate.indexOf('thumb.png') >= 0) {
-                        return alterpath + '/thumb.png';
-                    }
-                }
-
-                return item.about + '.img?s=128';
             }
+
         };
 
         // Public methods
@@ -438,8 +415,6 @@ define(['jquery',
             startRecord = 0;
         };
 
-        $boasearch.choosePreview = methods.choosePreview;
-
         // BoA: Initialize.
         methods.init();
     };
@@ -501,7 +476,7 @@ define(['jquery',
                     case "nextsearch": $boasearch.searchMore(); break;
                     case "option": return $boasearch.conf.options[paramval];
                     case "restart": $boasearch.restart(); break;
-                    case "choosePreview": return $boasearch.choosePreview(paramval);
+                    case "choosePreview": return BoAUtil.choosePreview(paramval);
                 }
             } else {
                 Log.debug('Error in boasearch object');
@@ -509,144 +484,6 @@ define(['jquery',
         }
 
         return true;
-    };
-
-    var chooseview = function(data) {
-
-        var $res = null;
-
-        // If it is a external resource.
-        if (data.manifest.conexion_type && data.manifest.conexion_type == 'external') {
-            $res = $('<iframe></iframe>');
-            $res.attr('src', data.manifest.url);
-
-            var $reslink = $('<p><a target="_blank"></a></p>');
-            $reslink.find('a').attr('href', data.manifest.url).html(data.manifest.url);
-
-            return $res.get(0).outerHTML + $reslink.get(0).outerHTML;
-        }
-
-        if (!data.metadata.technical || !data.metadata.technical.format) {
-            return $res;
-        }
-
-        if (data.metadata.technical.format.match(/pdf/gi) ||
-                data.metadata.technical.format.match(/html/gi) ||
-                data.metadata.technical.format.match(/tepuy/gi)) {
-            $res = $('<iframe></iframe>');
-            $res.attr('src', data.about + '/!/').attr('type', data.metadata.technical.format);
-
-            return $res.get(0).outerHTML;
-        }
-
-        var src = '';
-        var alternatebase;
-        if (data.id.indexOf('/content/') >= 0) {
-            alternatebase = data.id.substr(data.id.indexOf('/content/') + 9);
-        } else {
-            alternatebase = data.manifest.entrypoint;
-        }
-
-        if (data.manifest.alternate && data.manifest.entrypoint) {
-            var alterpath = data.about + '/!/.alternate/' + alternatebase + '/';
-            var name = '';
-
-            if (data.metadata.technical.format.match(/video/gi) ||
-                    data.metadata.technical.format.match(/audio/gi) ||
-                    data.metadata.technical.format.match(/image/gi)) {
-
-                if (typeof data.manifest.alternate == 'object') {
-                    name = data.manifest.alternate.find(e => /small/g.test(e));
-
-                    if (name) {
-                        src = alterpath + name;
-                    } else {
-                        name = data.manifest.alternate.find(e => /medium/g.test(e));
-                        src = name ? alterpath + name : data.about + '/!/' + data.manifest.entrypoint;
-                    }
-                } else {
-                    src = data.about + '/!/' + data.manifest.entrypoint;
-                }
-            } else {
-                name = typeof data.manifest.alternate == 'object' ?
-                                data.manifest.alternate.find(e => /thumb/g.test(e)) : '';
-                src = name ? alterpath + name : data.manifest.customicon;
-            }
-
-        } else {
-            if ('technical' in data.metadata && 'format' in data.metadata.technical &&
-                    (data.metadata.technical.format.match(/video/gi) ||
-                    data.metadata.technical.format.match(/audio/gi) ||
-                    data.metadata.technical.format.match(/image/gi))) {
-                src = data.about + '/!/';
-            } else {
-                src = data.manifest.customicon;
-            }
-        }
-
-        if (data.metadata.technical.format.match(/video/gi)) {
-            $res = $('<video controls><source></source></video>');
-            $res.find('source').attr('src', src).attr('type', data.metadata.technical.format);
-
-        } else if (data.metadata.technical.format.match(/audio/gi)) {
-            $res = $('<audio controls><source></source></audio>');
-            $res.find('source').attr('src', src).attr('type', data.metadata.technical.format);
-
-        } else {
-            $res = $('<img />');
-            $res.attr('src', src).attr('alt', data.metadata.general.title.none);
-        }
-
-        return $res.get(0).outerHTML;
-    };
-
-    var isdownloadable = function(data) {
-        // ToDo: validate by content type.
-        return !data.manifest.conexion_type || data.manifest.conexion_type != 'external';
-    };
-
-    var showmessage = function(text, type, info, asreturn) {
-        type = type ? type : 'error';
-        info = info ? info : '';
-
-        if (type == 'error') {
-            type = 'danger';
-        }
-
-        var content = $('#boa-tpl-error-item')[0].innerHTML;
-
-        content = content.replace(/{message}/g, text);
-        content = content.replace(/{info}/g, info);
-        content = content.replace(/{type}/g, type);
-
-        if (asreturn) {
-            return $(content);
-        } else {
-            if ($errorBox) {
-                $errorBox.html(content);
-            } else {
-                Log.debug(content);
-            }
-        }
-
-        return true;
-    };
-
-    var itemcontent = function(item) {
-
-        var content = $('#boa-tpl-item')[0].innerHTML;
-        var type = (item.metadata.technical && item.metadata.technical.format) ? item.metadata.technical.format : '';
-
-        content = content.replace(/{thumb}/g, item.thumb);
-        content = content.replace(/{title}/g, item.metadata.general.title.none);
-        content = content.replace(/{about}/g, item.about);
-        content = content.replace(/{description}/g, item.metadata.general.description.none);
-        content = content.replace(/{comments}/g, item.social.comments);
-        content = content.replace(/{score}/g, item.social.score.count ? item.social.score.sum + '/' + item.social.score.count : 0);
-        content = content.replace(/{views}/g, item.social.views);
-        content = content.replace(/{type}/g, type);
-
-        return content;
     };
 
     var binditem = function($item) {
@@ -665,12 +502,12 @@ define(['jquery',
                 .then(function(data) {
 
                     data.custom = {};
-                    data.custom.preview = chooseview(data);
+                    data.custom.preview = BoAUtil.chooseView(data);
                     data.custom.type = (data.metadata.technical && data.metadata.technical.format) ?
                                             data.metadata.technical.format : '';
                     data.custom.score = 'avg' in data.social.score ?
                                             data.social.score.avg + ' / ' + data.social.score.count : 0;
-                    data.custom.downloadable = isdownloadable(data);
+                    data.custom.downloadable = BoAUtil.isDownloadable(data);
                     data.about = encodeURI(data.about);
 
                     var socialnetworksitems = [];
@@ -751,18 +588,28 @@ define(['jquery',
                 $this.data('modal', modalresource);
 
                 return true;
+            })
+            .catch(function(error) {
+                Log.debug(error);
             });
 
         });
 
     };
 
-    var refreshadded = function() {
+    var refreshadded = function(change = true) {
+
         var $container = $('#boa-currentselection > div.boa-items');
         $container.children().detach();
         $('#boa-currentselection > .alert').detach();
 
-        $('#boa-currentselection .boa-saveselection').show();
+        if (change) {
+            $('#boa-currentselection .boa-saveselection').show();
+        }
+
+        if (!global.selected) {
+            return;
+        }
 
         for (var about in global.selected) {
             let $item = global.selected[about];
@@ -774,11 +621,14 @@ define(['jquery',
 
             $.get(about)
                 .then(function(data) {
-                    var $item = $(itemcontent(data));
+                    data.thumb = BoAUtil.choosePreview(data);
+
+                    var $item = $(BoAUtil.itemContent(data));
                     binditem($item);
                     $item.data('metadata', data);
                     global.selected[data.about] = $item;
                     $container.append($item);
+                    return true;
                 })
                 .fail(function(e) {
                     Log.debug('Error loading resource');
@@ -787,29 +637,6 @@ define(['jquery',
 
         }
     };
-
-    /**
-     * Load strings from server.
-     */
-    var loadStrings = function() {
-
-        strings.forEach(one => {
-            s[one.key] = one.key;
-        });
-
-        Str.get_strings(strings).then(function(results) {
-            var pos = 0;
-            strings.forEach(one => {
-                s[one.key] = results[pos];
-                pos++;
-            });
-            return true;
-        }).fail(function(e) {
-            Log.debug('Error loading strings');
-            Log.debug(e);
-        });
-    };
-    // End of Load strings.
 
     /**
      * Initialise all for the block.
@@ -825,7 +652,13 @@ define(['jquery',
         pagesize = pagesize ? pagesize : 10;
         global.socialnetworks = socialnetworks;
 
-        loadStrings();
+        // The variable "boacurrentselection" comes from the template because it can be so large that it cannot be passed
+        // by parameters since it exceeds the limit for these values.
+        $.each(M.boacurrentselection, function(index, uri) {
+            global.selected[uri] = null;
+        });
+
+        s = BoAUtil.loadStrings(strings);
 
         $('#' + blockid).each(function() {
             var $thisblock = $(this);
@@ -877,7 +710,7 @@ define(['jquery',
                         if ((!data || data.length === 0) && start == 0) {
                             $target.empty();
 
-                            var content = showmessage(s.noresultsfound, 'error', '', true);
+                            var content = BoAUtil.showMessage(s.noresultsfound);
 
                             $target.append(content);
                             return;
@@ -900,9 +733,9 @@ define(['jquery',
                                 }
                             }
 
-                            item.thumb = $boaSearch.boasearch('choosePreview', item);
+                            item.thumb = BoAUtil.choosePreview(item);
 
-                            var $item = $(itemcontent(item));
+                            var $item = $(BoAUtil.itemContent(item));
                             $item.data('metadata', item);
                             $item.appendTo($target);
 
@@ -913,12 +746,8 @@ define(['jquery',
                         var $target = $errorBox;
                         $target.empty();
 
-                        var $node = showmessage(error.message, 'error', error.info, true);
+                        var $node = BoAUtil.showMessage(error.message, 'error', error.info);
                         $target.append($node);
-
-                        $node.find('button.close').on('click', function() {
-                            $node.remove();
-                        });
 
                         Log.debug(error);
 
@@ -952,20 +781,23 @@ define(['jquery',
             }])[0].then(function(data) {
 
                 if (data) {
-                    let $msg = showmessage(s.saved, 'success', '', true);
+                    let $msg = BoAUtil.showMessage(s.saved, 'success');
                     $saveselection.after($msg);
                 } else {
-                    let $msg = showmessage(s.notsaved, 'error', '', true);
+                    let $msg = BoAUtil.showMessage(s.notsaved);
                     $saveselection.after($msg);
                 }
 
                 $thisbutton.hide();
+
+                return true;
             }).fail(function(e) {
                 Log.debug('Error saving resources selected');
                 Log.debug(e);
             });
         });
 
+        refreshadded(false);
     };
 
     return {

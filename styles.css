@@ -66,7 +66,8 @@
 
 #page-mod-boa-view .panel-body label {
     font-weight: bold;
-    font-size: 1.2em;
+    font-size: 1em;
+    line-height: 1.1em;
 }
 
 #page-mod-boa-view .panel-foot {
@@ -238,4 +239,83 @@
     display: flex;
     flex-wrap: wrap;
     padding: 10px 0;
+}
+
+#boa-contentplay > div > div {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 10px;
+}
+
+#boa-contentplay iframe {
+    width: 100%;
+    height: 70vh;
+}
+
+#boa-contentall {
+    position: fixed;
+    bottom: -135px;
+    z-index: 9;
+    left: 0;
+    right: 0;
+    background-color: var(--light);
+    border-top: 1px solid #aaae;
+    box-shadow: 0 0px 6px #888;
+}
+
+#boa-contentall:hover {
+    bottom: 0;
+}
+
+#boa-contentlist {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 10px;
+    border-top: 1px solid #aaae;
+}
+
+#boa-contentlist .boa-content-active {
+    border: 2px solid var(--success);
+}
+
+#boa-contentlist .boa-content-active:after {
+    content: "✔";
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: var(--success);
+    color: white;
+    padding: 5px;
+    border-radius: 0 0 5px 0;
+}
+
+#boa-contentlist .boa-content-active:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: var(--success);
+    opacity: 0.3;
+}
+
+#page-mod-boa-view #boa-contentlist .one-resource {
+    padding: 0;
+    margin: 0 5px;
+}
+
+#page-mod-boa-view #boa-contentlist .panel-body label {
+    font-weight: bold;
+    font-size: 1em;
+    line-height: 1.1em;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #fffb;
+    padding: 10px;
+    margin: 0;
+    cursor: pointer;
 }

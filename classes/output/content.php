@@ -33,12 +33,7 @@ use templatable;
  * @copyright  2024 David Herney @ BambuCo
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class searchpage implements renderable, templatable {
-
-    /**
-     * @var int $cmid Course module id
-     */
-    private $cmid;
+class content implements renderable, templatable {
 
     /**
      * @var object $moduleinstance The module instance.
@@ -48,10 +43,9 @@ class searchpage implements renderable, templatable {
     /**
      * Constructor.
      *
-     * @param int $cmid Course module id
+     * @param object $moduleinstance The module instance.
      */
-    public function __construct(int $cmid, object $moduleinstance) {
-        $this->cmid = $cmid;
+    public function __construct(object $moduleinstance) {
         $this->moduleinstance = $moduleinstance;
     }
 
@@ -84,27 +78,21 @@ class searchpage implements renderable, templatable {
 
         $id = 'mod_boa_' . time();
 
-        $uris = [];
-        if ($this->moduleinstance->resources) {
-            $uris = explode("\n", $this->moduleinstance->resources);
-            $uris = array_map('trim', $uris);
-            $uris = array_filter($uris);
-        }
-
         $defaultvariables = [
             'loadingimg' => $OUTPUT->pix_icon('i/loading', get_string('loadinghelp')),
             'blockid' => $id,
             'socialnetworks' => $socialnetworks,
-            'currentselection' => json_encode($uris),
         ];
+
+        $uris = explode("\n", $this->moduleinstance->resources);
+        $uris = array_map('trim', $uris);
+        $uris = array_filter($uris);
 
         $config = get_config('mod_boa');
         $repositories = explode("\n", $config->repositories);
         $repositories = array_map('trim', $repositories);
         $repositories = array_filter($repositories);
-
-        $pagesize = $config->pagesize;
-        $PAGE->requires->js_call_amd('mod_boa/main', 'init', [$id, $this->cmid, $repositories, $pagesize, $socialnetworks]);
+        $PAGE->requires->js_call_amd('mod_boa/content', 'init', [$uris]);
 
         return $defaultvariables;
     }
