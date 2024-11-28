@@ -24,6 +24,8 @@
 
 require(__DIR__ . '/../../../config.php');
 
+require_login();
+
 if (empty($_SERVER['PATH_INFO'])) {
     header('HTTP/1.0 400 Bad Request');
     die('No URI provided');
