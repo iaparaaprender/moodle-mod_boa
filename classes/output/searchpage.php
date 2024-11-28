@@ -49,6 +49,7 @@ class searchpage implements renderable, templatable {
      * Constructor.
      *
      * @param int $cmid Course module id
+     * @param object $moduleinstance The module instance.
      */
     public function __construct(int $cmid, object $moduleinstance) {
         $this->cmid = $cmid;

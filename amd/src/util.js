@@ -24,7 +24,7 @@ import $ from 'jquery';
 import {get_strings as getStrings} from 'core/str';
 import Log from 'core/log';
 
-/*eslint complexity: ["error", 30]*/
+/* eslint complexity: ["error", 30] */
 export const chooseView = (data) => {
 
     var $res = null;
@@ -47,10 +47,14 @@ export const chooseView = (data) => {
     if (data.metadata.technical.format.match(/pdf/gi) ||
             data.metadata.technical.format.match(/html/gi) ||
             data.metadata.technical.format.match(/tepuy/gi)) {
-        $res = $('<iframe></iframe>');
-        $res.attr('src', data.about + '/!/').attr('type', data.metadata.technical.format);
+        var proxyuri = 'proxy/index.php/' + window.btoa(data.about + '/!/') + '/';
 
-        return $res.get(0).outerHTML;
+        // The id scorm_object is a hack to play Tepuy objects.
+        $res = $('<iframe id="scorm_object"></iframe>');
+        $res.attr('src', proxyuri);
+        $res.attr('type', data.metadata.technical.format);
+
+        return $res;
     }
 
     var src = '';

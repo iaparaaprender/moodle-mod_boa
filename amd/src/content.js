@@ -49,19 +49,25 @@ var binditem = function($item) {
             $existicontent.show();
         } else {
             var maincontent = BoAUtil.chooseView(data);
-            var $maincontent = $('<div>' + maincontent + '</div>');
+            var $maincontent = $('<div></div>');
+            if (typeof maincontent == 'object') {
+                $maincontent.append(maincontent);
+            } else {
+                $maincontent.html(maincontent);
+            }
+
             $maincontent.attr('data-idresource', data.id);
             $contentplaybody.append($maincontent);
 
-            // ToDo: The next code has problem with cross-domain. We need to find a solution.
-            /*if ($maincontent.children().first().is('iframe')) {
+            /* ToDo: The next code has problem with cross-domain. We need to find a solution. */
+            if ($maincontent.children().first().is('iframe')) {
                 var iframe = $maincontent.children().first()[0];
                 // Adjusting the iframe height onload event.
                 iframe.onload = function() {
                     iframe.style.height = iframe.contentWindow.document.body.scrollHeight + 'px';
                     iframe.style.width = iframe.contentWindow.document.body.scrollWidth + 'px';
                 };
-            }*/
+            }
         }
 
         $contentplaytitle.html(data.metadata.general.title.none);
@@ -79,9 +85,14 @@ var binditem = function($item) {
 export const init = (uris) => {
 
     $contentplay = $('#boa-contentplay');
-    $contentplaybody = $contentplay.find('> div');
-    $contentplaytitle = $contentplay.find('> h2');
+    $contentplaytitle = $('<h2></h2>');
+    $contentplay.append($contentplaytitle);
+    $contentplaybody = $('<div></div>');
+    $contentplay.append($contentplaybody);
     $contentlist = $('#boa-contentlist');
+
+    // Required for some SCORM packages to work on the page, mainly those created with Tepuy.
+    window.scormplayerdata = {"courseid": M.cfg.courseId};
 
     $.each(uris, function(index, uri) {
 
