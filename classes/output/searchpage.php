@@ -83,8 +83,6 @@ class searchpage implements renderable, templatable {
 
         }
 
-        $id = 'mod_boa_' . time();
-
         $uris = [];
         if ($this->moduleinstance->resources) {
             $uris = explode("\n", $this->moduleinstance->resources);
@@ -92,20 +90,17 @@ class searchpage implements renderable, templatable {
             $uris = array_filter($uris);
         }
 
+        $repositories = \mod_boa\local\controller::get_repositories();
+
         $defaultvariables = [
             'loadingimg' => $OUTPUT->pix_icon('i/loading', get_string('loadinghelp')),
-            'blockid' => $id,
             'socialnetworks' => $socialnetworks,
             'currentselection' => json_encode($uris),
+            'catalogues' => $repositories,
         ];
 
-        $config = get_config('mod_boa');
-        $repositories = explode("\n", $config->repositories);
-        $repositories = array_map('trim', $repositories);
-        $repositories = array_filter($repositories);
-
-        $pagesize = $config->pagesize;
-        $PAGE->requires->js_call_amd('mod_boa/main', 'init', [$id, $this->cmid, $repositories, $pagesize, $socialnetworks]);
+        $pagesize = get_config('mod_boa', 'pagesize');
+        $PAGE->requires->js_call_amd('mod_boa/main', 'init', [$this->cmid, $repositories, $pagesize, $socialnetworks]);
 
         return $defaultvariables;
     }

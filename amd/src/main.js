@@ -39,7 +39,9 @@ define(['jquery',
     var $errorBox = null;
 
     var global = {
-        selected: []
+        "selected": [],
+        "socialnetworks": [],
+        "boasources": []
     };
 
     // Load strings.
@@ -58,6 +60,10 @@ define(['jquery',
         var cacheResults = [];
         var requestObjects = [];
         var startRecord = 0;
+
+        for (var i = 0; i < params.apiuris.length; i++) {
+            cacheResults[i] = [];
+        }
 
         $boasearch.wrap('<span class="boasearch-box"></span>');
 
@@ -106,8 +112,8 @@ define(['jquery',
         // Private methods.
         var methods = {
             init: function() {
-                if (!$boasearch.conf.apiuri) {
-                    ferror('Configuration error: You need set the API URI.');
+                if (!$boasearch.conf.apiuris || typeof $boasearch.conf.apiuris !== 'object') {
+                    ferror('Configuration error: You need set the API URIs.');
                     return;
                 }
 
@@ -265,10 +271,10 @@ define(['jquery',
                 }
             },
 
-            printResultSearch: function(data) {
+            printResultSearch: function(uriIndex, data) {
 
                 if (typeof $boasearch.conf.events.onfound == 'function') {
-                    $boasearch.conf.events.onfound(data, startRecord);
+                    $boasearch.conf.events.onfound(uriIndex, data, startRecord);
                 } else {
                     if ($boasearch.conf.results.target) {
                         var $target = $($boasearch.conf.results.target);
@@ -301,7 +307,8 @@ define(['jquery',
             $boasearchSuggestions.customReset();
             requestObjects = [];
 
-            var uri = $boasearch.conf.apiuri;
+            // Use the first API URIs for query suggestions.
+            var uri = $boasearch.conf.apiuris[0].uri;
             uri = uri.substr(0, uri.indexOf('/resources'));
             uri += '/queries.json';
 
@@ -329,7 +336,7 @@ define(['jquery',
             });
         };
 
-        $boasearch.search = function() {
+        $boasearch.search = function(catalogueIndex = null) {
 
             var currentTime = Date.now();
 
@@ -341,15 +348,18 @@ define(['jquery',
 
             methods.initSearch();
 
-            if (cacheResults[query] && cacheResults[query].timeQuery > (currentTime - $boasearch.conf.options.cacheLife)) {
-                methods.printResultSearch(cacheResults[query].data);
-                return true;
-            }
+            for (var cacheIndex = 0; cacheIndex < cacheResults.length; cacheIndex++) {
+                if (cacheResults[cacheIndex][query]
+                        && cacheResults[cacheIndex][query].timeQuery > (currentTime - $boasearch.conf.options.cacheLife)) {
+                    methods.printResultSearch(cacheIndex, cacheResults[query].data);
+                    return true;
+                }
 
-            cacheResults[query] = {
-                timeQuery: currentTime,
-                data: []
-            };
+                cacheResults[cacheIndex][query] = {
+                    timeQuery: currentTime,
+                    data: []
+                };
+            }
 
             var params = {
                 "q": query,
@@ -369,46 +379,54 @@ define(['jquery',
                 });
             }
 
-            $.ajax({
-                url: $boasearch.conf.apiuri,
-                data: params,
-                dataType: 'json',
-                success: function(data) {
-                    $boasearchSuggestions.empty();
+            for (var uriIndex = 0; uriIndex < $boasearch.conf.apiuris.length; uriIndex++) {
 
-                    if (typeof data === 'object' && data.error) {
-                        $boasearch.conf.events.onerror(data);
-                        data = [];
-                    }
-
-                    if (data.length > 0) {
-                        data.sort(function(a, b) {
-                            return b.size - a.size;
-                        });
-
-                        cacheResults[query].data = data;
-
-                    }
-
-                    methods.printResultSearch(data);
-                },
-                error: function(xhr) {
-                    var data = xhr.responseText;
-                    $boasearch.conf.events.onerror($.parseJSON(data));
-                },
-                fail: function(xhr) {
-                    var data = xhr.responseText;
-                    $boasearch.conf.events.onerror($.parseJSON(data));
+                if (catalogueIndex !== null && catalogueIndex !== uriIndex) {
+                    continue;
                 }
-            });
+
+                $.ajax({
+                    url: $boasearch.conf.apiuris[uriIndex].uri,
+                    data: params,
+                    uriIndex: uriIndex,
+                    dataType: 'json',
+                    success: function(data) {
+                        $boasearchSuggestions.empty();
+
+                        if (typeof data === 'object' && data.error) {
+                            $boasearch.conf.events.onerror(data);
+                            data = [];
+                        }
+
+                        if (data.length > 0) {
+                            data.sort(function(a, b) {
+                                return b.size - a.size;
+                            });
+
+                            cacheResults[this.uriIndex][query].data = data;
+
+                        }
+
+                        methods.printResultSearch(this.uriIndex, data);
+                    },
+                    error: function(xhr) {
+                        var data = xhr.responseText;
+                        $boasearch.conf.events.onerror($.parseJSON(data));
+                    },
+                    fail: function(xhr) {
+                        var data = xhr.responseText;
+                        $boasearch.conf.events.onerror($.parseJSON(data));
+                    }
+                });
+            }
 
             return true;
 
         };
 
-        $boasearch.searchMore = function() {
+        $boasearch.searchMore = function(catalogueIndex) {
             startRecord += $boasearch.conf.options.resultsSize;
-            $boasearch.search();
+            $boasearch.search(catalogueIndex);
         };
 
         $boasearch.restart = function() {
@@ -473,7 +491,7 @@ define(['jquery',
 
                 switch (params) {
                     case "search": $boasearch.search(); break;
-                    case "nextsearch": $boasearch.searchMore(); break;
+                    case "nextsearch": $boasearch.searchMore(paramval); break;
                     case "option": return $boasearch.conf.options[paramval];
                     case "restart": $boasearch.restart(); break;
                     case "choosePreview": return BoAUtil.choosePreview(paramval);
@@ -501,8 +519,13 @@ define(['jquery',
             var request = $.get($this.attr('boa-href'))
                 .then(function(data) {
 
+                    var previewcontent = BoAUtil.chooseView(data);
+                    if (typeof previewcontent == 'object') {
+                        previewcontent = previewcontent.get(0).outerHTML;
+                    }
+
                     data.custom = {};
-                    data.custom.preview = BoAUtil.chooseView(data);
+                    data.custom.preview = previewcontent;
                     data.custom.type = (data.metadata.technical && data.metadata.technical.format) ?
                                             data.metadata.technical.format : '';
                     data.custom.score = 'avg' in data.social.score ?
@@ -641,16 +664,17 @@ define(['jquery',
     /**
      * Initialise all for the block.
      *
-     * @param {string} blockid The block id.
      * @param {int} cmid The course module id.
-     * @param {array} boauri The BoA API URI.
+     * @param {array} boacatalogues The BoA API URIs.
      * @param {int} pagesize The number of items to show.
      * @param {array} socialnetworks The social networks to share.
      */
-    var init = function(blockid, cmid, boauri, pagesize, socialnetworks) {
+    var init = function(cmid, boacatalogues, pagesize, socialnetworks) {
 
         pagesize = pagesize ? pagesize : 10;
         global.socialnetworks = socialnetworks;
+
+        global.boasources = boacatalogues;
 
         // The variable "boacurrentselection" comes from the template because it can be so large that it cannot be passed
         // by parameters since it exceeds the limit for these values.
@@ -660,106 +684,120 @@ define(['jquery',
 
         s = BoAUtil.loadStrings(strings);
 
-        $('#' + blockid).each(function() {
-            var $thisblock = $(this);
-            var $searchResult = $thisblock.find('[data-control="search-result"]');
-            var $boaSearch = $thisblock.find('[data-control="search-text"]');
+        var $thisblock = $('#mod_boa-seachpagebox');
+        var $searchResult = $thisblock.find('[data-control="search-result"]');
+        var $boaCatalogues = $thisblock.find('.boa-catalogues');
+        var $boaCataloguesTabs = $boaCatalogues.find('.nav-tabs');
+        var $boaCataloguesContent = $boaCatalogues.find('.tab-content');
+        var $boaSearch = $thisblock.find('[data-control="search-text"]');
+        $errorBox = $thisblock.find('[data-control="errors-box"]');
 
-            $errorBox = $thisblock.find('[data-control="errors-box"]');
+        $thisblock.find('[data-control="search-button"]').on('click', function() {
+            $thisblock.find('> .search-result .tab-pane > .boa-content').empty();
+            $boaSearch.boasearch('restart');
+            $boaSearch.boasearch('search');
+        });
 
-            $thisblock.find('[data-control="search-button"]').on('click', function() {
-                $thisblock.find('> .search-result').empty();
-                $boaSearch.boasearch('restart');
-                $boaSearch.boasearch('search');
-            });
+        $boaSearch.boasearch({
+            apiuris: global.boasources,
+            catalogues: [],
+            filters: [],
+            options: {
+                cacheLife: 2000,
+                resultsSize: pagesize
+            },
+            events: {
+                onstart: function(more) {
+                    $searchResult.addClass('loading');
+                    $searchResult.show();
 
-            $boaSearch.boasearch({
-                apiuri: boauri[0],
-                catalogues: [],
-                filters: [],
-                options: {
-                    cacheLife: 2000,
-                    resultsSize: pagesize
+                    if (!more) {
+                        $searchResult.find('.tab-content > .tab-pane > .boa-content').empty();
+                        $boaCataloguesTabs.find('a:first').tab('show');
+                    }
                 },
-                events: {
-                    onstart: function(more) {
-                        $searchResult.addClass('loading');
-                        $searchResult.show();
+                onfound: function(catalogueIndex, data, start) {
 
-                        if (!more) {
-                            $searchResult.find('> .boa-content').empty();
-                        }
-                    },
-                    onfound: function(data, start) {
+                    $searchResult.removeClass('loading');
+                    var $catalogue = $boaCataloguesContent.find('#boa-catalogue-' + catalogueIndex);
+                    var $target = $catalogue.find(' > .boa-content');
 
-                        $searchResult.removeClass('loading');
-                        var $target = $searchResult.find('> .boa-content');
+                    var resultsSize = $boaSearch.boasearch('option', 'resultsSize');
 
-                        var resultsSize = $boaSearch.boasearch('option', 'resultsSize');
+                    if (data.length === 0 || data.length < resultsSize) {
+                        $catalogue.find('> button').hide();
+                    } else {
+                        $catalogue.find('> button').show();
+                    }
 
-                        if (data.length === 0 || data.length < resultsSize) {
-                            $searchResult.find('> button').hide();
-                        } else {
-                            $searchResult.find('> button').show();
-                        }
+                    if (start == 0) {
+                        $thisblock.find('[data-control="show-one"]').empty();
+                    }
 
-                        if (start == 0) {
-                            $thisblock.find('[data-control="show-one"]').empty();
-                        }
+                    if ((!data || data.length === 0) && start == 0) {
+                        $target.empty();
 
-                        if ((!data || data.length === 0) && start == 0) {
-                            $target.empty();
+                        var content = BoAUtil.showMessage(s.noresultsfound);
 
-                            var content = BoAUtil.showMessage(s.noresultsfound);
+                        $target.append(content);
+                        return;
+                    }
 
-                            $target.append(content);
+                    var availableItems = 0;
+                    $.each(data, function(k, item) {
+
+                        // Check if the item is already selected.
+                        if (global.selected[item.about]) {
                             return;
                         }
 
-                        $.each(data, function(k, item) {
+                        availableItems++;
 
-                            // Check if the item is already selected.
-                            if (global.selected[item.about]) {
-                                return;
+                        if (item.manifest.conexion_type == 'external') {
+                            item.finaluri = item.manifest.url;
+                        } else {
+                            item.finaluri = item.about + '/!/';
+
+                            if (item.manifest.entrypoint) {
+                                item.finaluri += item.manifest.entrypoint;
                             }
+                        }
 
-                            if (item.manifest.conexion_type == 'external') {
-                                item.finaluri = item.manifest.url;
-                            } else {
-                                item.finaluri = item.about + '/!/';
+                        item.thumb = BoAUtil.choosePreview(item);
 
-                                if (item.manifest.entrypoint) {
-                                    item.finaluri += item.manifest.entrypoint;
-                                }
-                            }
+                        var $item = $(BoAUtil.itemContent(item));
+                        $item.data('metadata', item);
+                        $item.appendTo($target);
 
-                            item.thumb = BoAUtil.choosePreview(item);
+                        binditem($item);
+                    });
 
-                            var $item = $(BoAUtil.itemContent(item));
-                            $item.data('metadata', item);
-                            $item.appendTo($target);
-
-                            binditem($item);
-                        });
-                    },
-                    onerror: function(error) {
-                        var $target = $errorBox;
-                        $target.empty();
-
-                        var $node = BoAUtil.showMessage(error.message, 'error', error.info);
-                        $target.append($node);
-
-                        Log.debug(error);
-
-                        $target.removeClass('loading');
+                    if (start == 0 && availableItems === 0) {
+                        var content = BoAUtil.showMessage(s.noresultsfound);
+                        $target.append(content);
                     }
+                },
+                onerror: function(error) {
+                    var $target = $errorBox;
+                    $target.empty();
+
+                    var $node = BoAUtil.showMessage(error.message, 'error', error.info);
+                    $target.append($node);
+
+                    Log.debug(error);
+
+                    $target.removeClass('loading');
                 }
-            });
+            }
+        });
 
-            $searchResult.find('> button').on('click', function() {
-                $boaSearch.boasearch('nextsearch');
+        $searchResult.find('.tab-pane').each(function(index, element) {
+            var $element = $(element);
+            $element.find('> button').on('click', function(event) {
+                event.preventDefault();
+                var $button = $(this);
+                $boaSearch.boasearch('nextsearch', $button.data('catalogueindex'));
             });
-
         });
 
         var $saveselection = $('#boa-currentselection .boa-saveselection');

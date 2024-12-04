@@ -11,7 +11,7 @@
     border-bottom-right-radius: 0;
 }
 
-#page-mod-boa-view .boa-box button.btn-primary {
+#page-mod-boa-view .boa-box .input-group button.btn-primary {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
 }
@@ -253,6 +253,10 @@
     height: 70vh;
 }
 
+#boa-contentplay > div > div > * {
+    max-width: 100%;
+}
+
 #boa-contentall {
     position: fixed;
     bottom: -135px;
@@ -318,4 +322,19 @@
     padding: 10px;
     margin: 0;
     cursor: pointer;
+}
+
+#page-mod-boa-view [data-control="search-result"].loading:after {
+    content: "\f110";
+    font-family: "FontAwesome";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
