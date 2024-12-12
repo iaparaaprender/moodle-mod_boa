@@ -265,7 +265,7 @@
     right: 0;
     background-color: var(--light);
     border-top: 1px solid #aaae;
-    box-shadow: 0 0px 6px #888;
+    box-shadow: 0 0 6px #888;
 }
 
 #boa-contentall:hover {

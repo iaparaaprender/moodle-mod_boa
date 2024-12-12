@@ -736,10 +736,7 @@ define(['jquery',
 
                     if ((!data || data.length === 0) && start == 0) {
                         $target.empty();
-
-                        var content = BoAUtil.showMessage(s.noresultsfound);
-
-                        $target.append(content);
+                        $target.append(BoAUtil.showMessage(s.noresultsfound));
                         return;
                     }
 
@@ -773,8 +770,7 @@ define(['jquery',
                     });
 
                     if (start == 0 && availableItems === 0) {
-                        var content = BoAUtil.showMessage(s.noresultsfound);
-                        $target.append(content);
+                        $target.append(BoAUtil.showMessage(s.noresultsfound));
                     }
                 },
                 onerror: function(error) {
